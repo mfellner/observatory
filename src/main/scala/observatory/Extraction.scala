@@ -3,13 +3,17 @@ package observatory
 import java.time.LocalDate
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 /**
   * 1st milestone: data extraction
   */
 object Extraction {
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+
+  private lazy val spark = SparkSession.builder.master("local[4]").getOrCreate()
+
+  import spark.implicits._
 
   /**
     * @param year             Year number
@@ -26,16 +30,15 @@ object Extraction {
     //      .filter(_.isEmpty)
     //      .map(parseStation)
 
-    val ss = SparkSession.builder.master("local[4]").getOrCreate()
-    import ss.implicits._
-
-    val stations = ss.read
+    val stations = spark.read
       .csv(Extraction.getClass.getResource(stationsFile).getPath)
       .toDF("stn", "wban", "lat", "lon")
+      .na.fill("", Seq("stn", "wban"))
 
-    val temperatures = ss.read
+    val temperatures = spark.read
       .csv(Extraction.getClass.getResource(temperaturesFile).getPath)
       .toDF("stn", "wban", "month", "day", "temp")
+      .na.fill("", Seq("stn", "wban"))
 
     val joined = temperatures.join(stations, Seq("stn", "wban"))
 
@@ -44,15 +47,14 @@ object Extraction {
       .na.drop()
       .map(row => LocalTemperature(
         year,
-        parseInt(row.getAs("month")),
-        parseInt(row.getAs("day")),
-        parseDouble(row.getAs("lat")),
-        parseDouble(row.getAs("lon")),
-        parseDouble(row.getAs("temp"))
+        parseInt(row.getAs[String]("month")),
+        parseInt(row.getAs[String]("day")),
+        parseDouble(row.getAs[String]("lat")),
+        parseDouble(row.getAs[String]("lon")),
+        parseDouble(row.getAs[String]("temp"))
       ))
       .collect()
 
-    ss.close()
     result.map(t => (
       LocalDate.of(t.year, t.month, t.day),
       Location(t.lat, t.lon),
@@ -65,7 +67,9 @@ object Extraction {
     * @return A sequence containing, for each location, the average temperature over the year.
     */
   def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Double)]): Iterable[(Location, Double)] = {
-    ???
+    records.par.toStream.groupBy(_._2).mapValues(records => {
+      records.map(_._3).sum / records.size
+    })
   }
 
   def parseDate(year: Int,
@@ -73,30 +77,6 @@ object Extraction {
                 day: String): LocalDate = LocalDate.of(year, month.toInt, day.toInt)
 
   def parseLocation(lat: String, lon: String) = Location(parseDouble(lat), parseDouble(lon))
-
-  def parseStation(line: String): Station = line.split(",") match {
-    case Array(stn) => Station(
-      if (stn.isEmpty) None else Some(stn),
-      None,
-      None,
-      None)
-    case Array(stn, wban) => Station(
-      if (stn.isEmpty) None else Some(stn),
-      if (wban.isEmpty) None else Some(wban),
-      None,
-      None)
-    case Array(stn, wban, lat) => Station(
-      if (stn.isEmpty) None else Some(stn),
-      if (wban.isEmpty) None else Some(wban),
-      if (lat.isEmpty) None else Some(parseDouble(lat)),
-      None)
-    case Array(stn, wban, lat, lon) => Station(
-      if (stn.isEmpty) None else Some(stn),
-      if (wban.isEmpty) None else Some(wban),
-      if (lat.isEmpty) None else Some(parseDouble(lat)),
-      if (lon.isEmpty) None else Some(parseDouble(lon)))
-    case _ => throw new IllegalArgumentException(s"Illegal station: $line")
-  }
 
   def parseNumber(s: String): String = s
     .replaceFirst("$\\+?0+", "")
