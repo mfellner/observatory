@@ -4,6 +4,9 @@ import java.time.LocalDate
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.udf
+
 
 /**
   * 1st milestone: data extraction
@@ -30,17 +33,27 @@ object Extraction {
     //      .filter(_.isEmpty)
     //      .map(parseStation)
 
+    val combinedId = udf((stn: String, wban: String) => (stn, wban))
+
     val stations = spark.read
       .csv(Extraction.getClass.getResource(stationsFile).getPath)
       .toDF("stn", "wban", "lat", "lon")
-      .na.fill("", Seq("stn", "wban"))
+      .withColumn("id", combinedId(col("stn"), col("wban")))
+    //      .filter(col("stn").isNotNull or col("wban").isNotNull)
+    //      .na.fill("", Seq("stn", "wban"))
 
     val temperatures = spark.read
       .csv(Extraction.getClass.getResource(temperaturesFile).getPath)
       .toDF("stn", "wban", "month", "day", "temp")
-      .na.fill("", Seq("stn", "wban"))
+      .withColumn("id", combinedId(col("stn"), col("wban")))
+    //      .filter(col("stn").isNotNull or col("wban").isNotNull)
+    //      .na.fill("", Seq("stn", "wban"))
 
-    val joined = temperatures.join(stations, Seq("stn", "wban"))
+    //    val joined = temperatures.join(stations, Seq("stn", "wban"))
+    //    val joined = temperatures.join(stations,
+    //      stations("stn") <=> temperatures("stn") && stations("wban") <=> temperatures("wban"),
+    //      "left_outer")
+    val joined = temperatures.join(stations, Seq("id"), "left_outer")
 
     val result = joined
       .select("lat", "lon", "month", "day", "temp")

@@ -38,6 +38,7 @@ class ExtractionTest extends FunSuite {
     assert(Extraction.getClass.getResource(stationsFile).getPath.isEmpty === false)
     assert(Extraction.getClass.getResource("/1975-test.csv").getPath.isEmpty === false)
     assert(Extraction.getClass.getResource("/1995-test.csv").getPath.isEmpty === false)
+    assert(Extraction.getClass.getResource("/2000-test.csv").getPath.isEmpty === false)
     assert(Extraction.getClass.getResource("/2015-test.csv").getPath.isEmpty === false)
   }
 
@@ -46,6 +47,7 @@ class ExtractionTest extends FunSuite {
       ("year", "stationsFile", "temperaturesFile"),
       (1975, stationsFile, "/1975-test.csv"),
       (1995, stationsFile, "/1995-test.csv"),
+      (2000, stationsFile, "/2000-test.csv"),
       (2015, stationsFile, "/2015-test.csv")
     )) { (year, stationsFile, temperaturesFile) =>
       val temperatures = Extraction.locateTemperatures(year, stationsFile, temperaturesFile)
