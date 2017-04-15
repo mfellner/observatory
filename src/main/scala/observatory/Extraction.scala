@@ -3,9 +3,8 @@ package observatory
 import java.time.LocalDate
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{Dataset, SparkSession}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.udf
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.functions.{udf, _}
 
 
 /**
@@ -15,6 +14,8 @@ object Extraction {
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
   private lazy val spark = SparkSession.builder.master("local[4]").getOrCreate()
+
+  private lazy val combinedId = udf((stn: String, wban: String) => (stn, wban))
 
   import spark.implicits._
 
@@ -33,27 +34,31 @@ object Extraction {
     //      .filter(_.isEmpty)
     //      .map(parseStation)
 
-    val combinedId = udf((stn: String, wban: String) => (stn, wban))
+    val stations = readStations(stationsFile)
+    val temperatures = readTemperatures(temperaturesFile)
 
-    val stations = spark.read
-      .csv(Extraction.getClass.getResource(stationsFile).getPath)
-      .toDF("stn", "wban", "lat", "lon")
-      .withColumn("id", combinedId(col("stn"), col("wban")))
-    //      .filter(col("stn").isNotNull or col("wban").isNotNull)
-    //      .na.fill("", Seq("stn", "wban"))
+    locateTemperatures(year, stations, temperatures)
+  }
 
-    val temperatures = spark.read
-      .csv(Extraction.getClass.getResource(temperaturesFile).getPath)
-      .toDF("stn", "wban", "month", "day", "temp")
-      .withColumn("id", combinedId(col("stn"), col("wban")))
-    //      .filter(col("stn").isNotNull or col("wban").isNotNull)
-    //      .na.fill("", Seq("stn", "wban"))
-
+  def locateTemperatures(year: Int,
+                         stations: DataFrame,
+                         temperatures: DataFrame): Iterable[(LocalDate, Location, Double)] = {
     //    val joined = temperatures.join(stations, Seq("stn", "wban"))
     //    val joined = temperatures.join(stations,
     //      stations("stn") <=> temperatures("stn") && stations("wban") <=> temperatures("wban"),
     //      "left_outer")
-    val joined = temperatures.join(stations, Seq("id"), "left_outer")
+
+    val stations_ = stations
+      .toDF("stn", "wban", "lat", "lon")
+      .na.fill("", Seq("stn", "wban"))
+      .withColumn("id", combinedId(col("stn"), col("wban")))
+
+    val temperatures_ = temperatures
+      .toDF("stn", "wban", "month", "day", "temp")
+      .na.fill("", Seq("stn", "wban"))
+      .withColumn("id", combinedId(col("stn"), col("wban")))
+
+    val joined = temperatures_.join(stations_, "id")
 
     val result = joined
       .select("lat", "lon", "month", "day", "temp")
@@ -68,12 +73,20 @@ object Extraction {
       ))
       .collect()
 
-    result.map(t => (
+    result.par.toStream.map(t => (
       LocalDate.of(t.year, t.month, t.day),
       Location(t.lat, t.lon),
       t.temp
     ))
   }
+
+  def readStations(stationsFile: String): DataFrame = spark
+    .read
+    .csv(Extraction.getClass.getResource(stationsFile).getPath)
+
+  def readTemperatures(temperaturesFile: String): DataFrame = spark
+    .read
+    .csv(Extraction.getClass.getResource(temperaturesFile).getPath)
 
   /**
     * @param records A sequence containing triplets (date, location, temperature)

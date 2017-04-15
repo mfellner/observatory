@@ -45,17 +45,16 @@ class ExtractionTest extends FunSuite {
   test("locateTemperatures") {
     forAll(Table(
       ("year", "stationsFile", "temperaturesFile"),
-      (1975, stationsFile, "/1975-test.csv"),
-      (1995, stationsFile, "/1995-test.csv"),
-      (2000, stationsFile, "/2000-test.csv"),
-      (2015, stationsFile, "/2015-test.csv")
+      //      (1975, stationsFile, "/1975.csv"),
+      //      (1995, stationsFile, "/1995.csv"),
+      //      (2000, stationsFile, "/2000.csv"),
+      (2015, stationsFile, "/2015.csv")
     )) { (year, stationsFile, temperaturesFile) =>
-      val temperatures = Extraction.locateTemperatures(year, stationsFile, temperaturesFile)
-      assert(temperatures.nonEmpty)
-      assert(temperatures.head._1.getYear === year)
-      assert(temperatures.head._2.lat !== null)
-      assert(temperatures.head._2.lon !== null)
-      assert(temperatures.head._3 !== null)
+      val stations = Extraction.readStations(stationsFile)
+      val temperatures = Extraction.readTemperatures(temperaturesFile).sample(false, 0.001)
+      val result = Extraction.locateTemperatures(year, stations, temperatures)
+      assert(result.nonEmpty)
+      assert(result.head._1.getYear === year)
     }
   }
 }
