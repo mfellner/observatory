@@ -69,7 +69,7 @@ object Extraction {
         parseInt(row.getAs[String]("day")),
         parseDouble(row.getAs[String]("lat")),
         parseDouble(row.getAs[String]("lon")),
-        parseDouble(row.getAs[String]("temp"))
+        toCelsius(parseDouble(row.getAs[String]("temp")))
       ))
       .collect()
 
@@ -111,4 +111,6 @@ object Extraction {
   def parseDouble(s: String): Double = parseNumber(s).toDouble
 
   def parseInt(s: String): Int = parseNumber(s).toInt
+
+  def toCelsius(fahrenheit: Double) = (fahrenheit - 32F) * (5F / 9F)
 }
