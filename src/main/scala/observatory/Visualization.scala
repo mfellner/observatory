@@ -13,7 +13,7 @@ object Visualization {
     * @return The predicted temperature at `location`
     */
   def predictTemperature(temperatures: Iterable[(Location, Double)], location: Location): Double = {
-    ???
+    0
   }
 
   /**
@@ -30,7 +30,8 @@ object Visualization {
     * @param colors       Color scale
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
-  def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
+  def visualize(temperatures: Iterable[(Location, Double)],
+                colors: Iterable[(Double, Color)]): Image = {
     ???
   }
 

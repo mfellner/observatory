@@ -3,8 +3,8 @@ package observatory
 import java.time.LocalDate
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions.{udf, _}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 
 /**
@@ -28,26 +28,15 @@ object Extraction {
   def locateTemperatures(year: Int,
                          stationsFile: String,
                          temperaturesFile: String): Iterable[(LocalDate, Location, Double)] = {
-    //    val stations = io.file.readAll[Task](Paths.get(stationsFile), 4096)
-    //      .through(text.utf8Decode)
-    //      .through(text.lines)
-    //      .filter(_.isEmpty)
-    //      .map(parseStation)
-
     val stations = readStations(stationsFile)
     val temperatures = readTemperatures(temperaturesFile)
 
     locateTemperatures(year, stations, temperatures)
   }
 
-  def locateTemperatures(year: Int,
-                         stations: DataFrame,
-                         temperatures: DataFrame): Iterable[(LocalDate, Location, Double)] = {
-    //    val joined = temperatures.join(stations, Seq("stn", "wban"))
-    //    val joined = temperatures.join(stations,
-    //      stations("stn") <=> temperatures("stn") && stations("wban") <=> temperatures("wban"),
-    //      "left_outer")
-
+  def createLocalTemperatures(year: Int,
+                              stations: DataFrame,
+                              temperatures: DataFrame): Dataset[LocalTemperature] = {
     val stations_ = stations
       .toDF("stn", "wban", "lat", "lon")
       .na.fill("", Seq("stn", "wban"))
@@ -60,7 +49,7 @@ object Extraction {
 
     val joined = temperatures_.join(stations_, "id")
 
-    val result = joined
+    joined
       .select("lat", "lon", "month", "day", "temp")
       .na.drop()
       .map(row => LocalTemperature(
@@ -71,13 +60,20 @@ object Extraction {
         parseDouble(row.getAs[String]("lon")),
         toCelsius(parseDouble(row.getAs[String]("temp")))
       ))
-      .collect()
+  }
 
-    result.par.toStream.map(t => (
+  def locateTemperatures(temperatures: Dataset[LocalTemperature]): Iterable[(LocalDate, Location, Double)] = {
+    temperatures.collect().par.toStream.map(t => (
       LocalDate.of(t.year, t.month, t.day),
       Location(t.lat, t.lon),
       t.temp
     ))
+  }
+
+  def locateTemperatures(year: Int,
+                         stations: DataFrame,
+                         temperatures: DataFrame): Iterable[(LocalDate, Location, Double)] = {
+    locateTemperatures(createLocalTemperatures(year, stations, temperatures))
   }
 
   def readStations(stationsFile: String): DataFrame = spark
@@ -112,9 +108,12 @@ object Extraction {
 
   def parseInt(s: String): Int = parseNumber(s).toInt
 
-  val bd32 = BigDecimal(32)
-  val bd1dot8 = BigDecimal(1.8)
+  private lazy val bd32 = BigDecimal(32)
+  private lazy val bd1dot8 = BigDecimal(1.8)
 
   def toCelsius(fahrenheit: Double): Double =
-    ((BigDecimal(fahrenheit) - bd32) / bd1dot8).setScale(4).rounded.toDouble
+    ((BigDecimal(fahrenheit).setScale(10, BigDecimal.RoundingMode.HALF_EVEN) - bd32) / bd1dot8)
+      .setScale(4, BigDecimal.RoundingMode.HALF_EVEN)
+      .rounded
+      .toDouble
 }
