@@ -112,5 +112,9 @@ object Extraction {
 
   def parseInt(s: String): Int = parseNumber(s).toInt
 
-  def toCelsius(fahrenheit: Double) = (fahrenheit - 32F) * (5F / 9F)
+  val bd32 = BigDecimal(32)
+  val bd1dot8 = BigDecimal(1.8)
+
+  def toCelsius(fahrenheit: Double): Double =
+    ((BigDecimal(fahrenheit) - bd32) / bd1dot8).setScale(4).rounded.toDouble
 }
