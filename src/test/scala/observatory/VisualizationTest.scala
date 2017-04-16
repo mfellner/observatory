@@ -78,10 +78,17 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
     assert(Visualization.findBounds(points, -61) === expected)
   }
 
-  test("interpolateColor") {
+  test("interpolateColor 1") {
     val points = List(
       (-1.0, Color(255, 0, 0)),
       (0.0, Color(0, 0, 255)))
     assert(Visualization.interpolateColor(points, -0.75) === Color(191, 0, 64))
+  }
+
+  test("interpolateColor 2") {
+    val points = List(
+      (-3.0, Color(255, 0, 0)),
+      (2.147483647E9, Color(0, 0, 255)))
+    assert(Visualization.interpolateColor(points, 1.073741822E9) === Color(128, 0, 128))
   }
 }

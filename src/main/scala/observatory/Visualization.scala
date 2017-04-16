@@ -85,7 +85,7 @@ object Visualization {
   def lerpColor(hi: Int, lo: Int, t: Double): Int = {
     if (hi == lo)
       hi
-    Math.round(lo + ((hi - lo) * t)).toInt
+    Math.round(BigDecimal(lo + ((hi - lo) * t)).toFloat)
   }
 
   def findBounds(points: Iterable[(Double, Color)],
