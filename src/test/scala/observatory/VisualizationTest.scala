@@ -2,9 +2,9 @@ package observatory
 
 
 import org.junit.runner.RunWith
-import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.Checkers
+import org.scalatest.{FunSuite, Matchers}
 
 @RunWith(classOf[JUnitRunner])
 class VisualizationTest extends FunSuite with Checkers with Matchers {
@@ -49,18 +49,19 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
     assert(prediction - 19.0 < 1)
   }
 
-  private val points = Array(
-    (60.0, Color(255, 255, 255)),
-    (32.0, Color(255, 0, 0)),
-    (12.0, Color(255, 255, 0)),
-    (0.0, Color(0, 255, 255)),
-    (-15.0, Color(0, 0, 255)),
-    (-27.0, Color(255, 0, 255)),
-    (-50.0, Color(33, 0, 107)),
-    (-60.0, Color(0, 0, 0))
-  )
-
   test("findBounds") {
+    val points =
+      Array(
+        (60.0, Color(255, 255, 255)),
+        (32.0, Color(255, 0, 0)),
+        (12.0, Color(255, 255, 0)),
+        (0.0, Color(0, 255, 255)),
+        (-15.0, Color(0, 0, 255)),
+        (-27.0, Color(255, 0, 255)),
+        (-50.0, Color(33, 0, 107)),
+        (-60.0, Color(0, 0, 0))
+      )
+
     var expected = (points(1), points(2))
     assert(Visualization.findBounds(points, 30) === expected)
 
@@ -75,5 +76,12 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
 
     expected = (points.last, points.last)
     assert(Visualization.findBounds(points, -61) === expected)
+  }
+
+  test("interpolateColor") {
+    val points = List(
+      (-1.0, Color(255, 0, 0)),
+      (0.0, Color(0, 0, 255)))
+    assert(Visualization.interpolateColor(points, -0.75) === Color(191, 0, 64))
   }
 }
