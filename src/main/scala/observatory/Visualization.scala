@@ -63,7 +63,42 @@ object Visualization {
     * @return The color that corresponds to `value`, according to the color scale defined by `points`
     */
   def interpolateColor(points: Iterable[(Double, Color)], value: Double): Color = {
-    ???
+    val (hi, lo) = findBounds(points, value)
+
+    if (hi == lo)
+      hi._2
+    else {
+      val t = value / hi._1
+      Color(
+        lerpColor(hi._2.red, lo._2.red, t),
+        lerpColor(hi._2.green, lo._2.green, t),
+        lerpColor(hi._2.blue, lo._2.blue, t))
+    }
+  }
+
+  def lerpColor(hi: Int, lo: Int, t: Double): Int = {
+    if (hi == lo)
+      hi
+    Math.round(lo + ((hi - lo) * t)).toInt
+  }
+
+  def findBounds(points: Iterable[(Double, Color)],
+                 value: Double): ((Double, Color), (Double, Color)) = {
+    var hi: (Double, Color) = points.head
+    var lo: (Double, Color) = hi
+
+    for (p <- points) {
+      if (p._1 == value) {
+        return (p, p)
+      } else if (p._1 < value) {
+        lo = p
+        return (hi, lo)
+      } else {
+        hi = p
+        lo = p
+      }
+    }
+    (hi, lo)
   }
 
   /**
