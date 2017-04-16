@@ -68,24 +68,20 @@ object Visualization {
     if (hi == lo)
       hi._2
     else {
-      val t = Math.abs(value) / (Math.abs(hi._1) + Math.abs(lo._1))
-      if (value >= 0)
-        Color(
-          lerpColor(hi._2.red, lo._2.red, t),
-          lerpColor(hi._2.green, lo._2.green, t),
-          lerpColor(hi._2.blue, lo._2.blue, t))
-      else
-        Color(
-          lerpColor(lo._2.red, hi._2.red, t),
-          lerpColor(lo._2.green, hi._2.green, t),
-          lerpColor(lo._2.blue, hi._2.blue, t))
+      //      val t = Math.abs(value / (hi._1 + lo._1))
+      val t = Math.abs((value - lo._1) / (hi._1 - lo._1))
+      Color(
+        lerpColor(hi._2.red, lo._2.red, t),
+        lerpColor(hi._2.green, lo._2.green, t),
+        lerpColor(hi._2.blue, lo._2.blue, t))
     }
   }
 
   def lerpColor(hi: Int, lo: Int, t: Double): Int = {
     if (hi == lo)
       hi
-    Math.round(BigDecimal(lo + ((hi - lo) * t)).toFloat)
+    else
+      Math.round(BigDecimal(lo + ((hi - lo) * t)).toFloat)
   }
 
   def findBounds(points: Iterable[(Double, Color)],

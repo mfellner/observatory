@@ -91,4 +91,11 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
       (2.147483647E9, Color(0, 0, 255)))
     assert(Visualization.interpolateColor(points, 1.073741822E9) === Color(128, 0, 128))
   }
+
+  test("interpolateColor 3") {
+    val points = List(
+      (-1.0, Color(255, 0, 0)),
+      (15.0, Color(0, 0, 255)))
+    assert(Visualization.interpolateColor(points, 3.0) === Color(191, 0, 64))
+  }
 }
