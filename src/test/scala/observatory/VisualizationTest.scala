@@ -26,9 +26,6 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
   }
 
   test("predictTemperature local") {
-    //    val path = "/2000-local.csv"
-    //    val file = Main.getClass.getResource(path).toURI
-    //    val temperatures = Utils.readAverageTemperatures(file)
     val temperatures = Iterable(
       (berlin2, 20.0),
       (berlin3, 10.0)
@@ -49,18 +46,29 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
     assert(prediction - 19.0 < 1)
   }
 
+  test("predictTemperature exact") {
+    val temperatures = Iterable(
+      (berlin, 20.0),
+      (potsdam, 19.5),
+      (dresden, 5.0),
+      (munich, 4.0)
+    )
+    val prediction = Visualization.predictTemperature(temperatures, dresden)
+
+    assert(prediction - 5.0 < 0.00001)
+  }
+
   test("findBounds") {
-    val points =
-      Array(
-        (60.0, Color(255, 255, 255)),
-        (32.0, Color(255, 0, 0)),
-        (12.0, Color(255, 255, 0)),
-        (0.0, Color(0, 255, 255)),
-        (-15.0, Color(0, 0, 255)),
-        (-27.0, Color(255, 0, 255)),
-        (-50.0, Color(33, 0, 107)),
-        (-60.0, Color(0, 0, 0))
-      )
+    val points = Array(
+      (60.0, Color(255, 255, 255)),
+      (32.0, Color(255, 0, 0)),
+      (12.0, Color(255, 255, 0)),
+      (0.0, Color(0, 255, 255)),
+      (-15.0, Color(0, 0, 255)),
+      (-27.0, Color(255, 0, 255)),
+      (-50.0, Color(33, 0, 107)),
+      (-60.0, Color(0, 0, 0))
+    )
 
     var expected = (points(1), points(2))
     assert(Visualization.findBounds(points, 30) === expected)
@@ -78,24 +86,34 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
     assert(Visualization.findBounds(points, -61) === expected)
   }
 
-  test("interpolateColor 1") {
-    val points = List(
+  test("interpolateColor") {
+    var points = List(
       (-1.0, Color(255, 0, 0)),
       (0.0, Color(0, 0, 255)))
     assert(Visualization.interpolateColor(points, -0.75) === Color(191, 0, 64))
-  }
 
-  test("interpolateColor 2") {
-    val points = List(
+    points = List(
       (-3.0, Color(255, 0, 0)),
       (2.147483647E9, Color(0, 0, 255)))
     assert(Visualization.interpolateColor(points, 1.073741822E9) === Color(128, 0, 128))
-  }
 
-  test("interpolateColor 3") {
-    val points = List(
+    points = List(
       (-1.0, Color(255, 0, 0)),
       (15.0, Color(0, 0, 255)))
     assert(Visualization.interpolateColor(points, 3.0) === Color(191, 0, 64))
+  }
+
+  test("arrayIndexToLocation topLeft") {
+    val width = 360
+    val location = Visualization.arrayIndexToLocation(0, width)
+    assert(location === Location(90, -180))
+  }
+
+  test("arrayIndexToLocation bottomRight") {
+    val width = 360
+    val height = 180
+    val i = (width * height) - 1
+    val location = Visualization.arrayIndexToLocation(i, width)
+    assert(location === Location(-90, 180))
   }
 }

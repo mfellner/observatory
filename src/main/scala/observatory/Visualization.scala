@@ -1,8 +1,9 @@
 package observatory
 
+import java.awt.image.BufferedImage
 import java.lang.Math._
 
-import com.sksamuel.scrimage.Image
+import com.sksamuel.scrimage.{Image, Pixel}
 
 /**
   * 2nd milestone: basic visualization
@@ -54,7 +55,7 @@ object Visualization {
     val divisor = sin(aLatR) * sin(bLatR) + cos(aLatR) * cos(bLatR) * cos(dLon)
     //    val radians = atan(dividend / divisor)
     val radians = atan2(dividend, divisor)
-    6371000.0 * radians
+    earthRadiusMeters * radians
   }
 
   /**
@@ -81,7 +82,8 @@ object Visualization {
     if (hi == lo)
       hi
     else
-      Math.round(BigDecimal(lo + ((hi - lo) * t)).toFloat)
+      (lo * (1.0 - t) + hi * t + 0.5).toInt
+    //      Math.round(BigDecimal(lo + ((hi - lo) * t)).toFloat)
   }
 
   def findBounds(points: Iterable[(Double, Color)],
@@ -110,8 +112,26 @@ object Visualization {
     */
   def visualize(temperatures: Iterable[(Location, Double)],
                 colors: Iterable[(Double, Color)]): Image = {
-    ???
+
+    val imgType = BufferedImage.TYPE_INT_RGB
+    val width = 360
+    val height = 180
+
+    val pixels = Stream.range(0, width * height).par.map(i => {
+      val location = arrayIndexToLocation(i, width)
+      val temperature = predictTemperature(temperatures, location)
+      val color = interpolateColor(colors, temperature)
+      Pixel(color.red, color.green, color.blue, 255)
+    }).toArray
+
+    Image(width, height, pixels, imgType)
   }
 
+  def arrayIndexToLocation(i: Int, rowWidth: Int): Location = {
+    val rowIndex = i / rowWidth
+    val colIndex = i - (rowIndex * rowWidth)
+    val lat = if (rowIndex < 90) rowIndex + 90 else (((rowIndex + 90) % 90) + 1) * -1
+    val lon = if (colIndex < 180) colIndex - 180 else ((colIndex - 180) % 180) + 1
+    Location(lat, lon)
+  }
 }
-

@@ -11,7 +11,7 @@ object Utils {
     val stations = Extraction.readStations("/stations.csv").cache()
 
     years.map { year =>
-      val outputPath = Paths.get(target, s"/$year-local.csv")
+      val outputPath = Paths.get(target, s"$year-local.csv")
       val temperatures = Extraction.readTemperatures(s"/$year.csv")
       val localTemperatures = Extraction.createLocalTemperatures(year, stations, temperatures)
       val locatedTemperatures = Extraction.locateTemperatures(localTemperatures)
