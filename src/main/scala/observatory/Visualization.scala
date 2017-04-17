@@ -20,7 +20,7 @@ object Visualization {
     */
   def predictTemperature(temperatures: Iterable[(Location, Double)], location: Location): Double = {
 
-    val weights = temperatures.par.toStream.map {
+    val weights = temperatures.toStream.par.map {
       case (loc, _) =>
         val d = distance(loc, location)
         if (d > distanceThresholdMeters)
@@ -31,7 +31,7 @@ object Visualization {
 
     val sumOfWeights = weights.sum
 
-    val sumOfWeightedTemps = temperatures.par.toStream.zip(weights).map {
+    val sumOfWeightedTemps = temperatures.toStream.par.zip(weights).map {
       case ((loc, temp), weight) =>
         val d = distance(loc, location)
         if (d > distanceThresholdMeters) {
@@ -117,12 +117,19 @@ object Visualization {
     val width = 360
     val height = 180
 
-    val pixels = Stream.range(0, width * height).par.map(i => {
-      val location = arrayIndexToLocation(i, width)
-      val temperature = predictTemperature(temperatures, location)
-      val color = interpolateColor(colors, temperature)
-      Pixel(color.red, color.green, color.blue, 255)
-    }).toArray
+    //    val pixels = Stream.range(0, width * height).par.map(i => {
+    //      val location = arrayIndexToLocation(i, width)
+    //      val temperature = predictTemperature(temperatures, location)
+    //      val color = interpolateColor(colors, temperature)
+    //      Pixel(color.red, color.green, color.blue, 255)
+    //    }).toArray
+
+    val pixels = Stream.range(0, width * height).par
+      .map(arrayIndexToLocation(_, width))
+      .map(predictTemperature(temperatures, _))
+      .map(interpolateColor(colors, _))
+      .map(color => Pixel(color.red, color.green, color.blue, 255))
+      .toArray
 
     Image(width, height, pixels, imgType)
   }
