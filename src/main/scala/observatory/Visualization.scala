@@ -12,6 +12,7 @@ object Visualization {
   val earthRadiusMeters = 6371000.0
   val distanceThresholdMeters = 1000.0
   val p = 2.0
+  var temperatureMap: Map[Location, Double] = Map.empty
 
   /**
     * @param temperatures Known temperatures: pairs containing a location and the temperature at this location
@@ -33,7 +34,7 @@ object Visualization {
 
     val sumOfWeightedTemps = temperatures.toStream.par.zip(weights).map {
       case ((loc, temp), weight) =>
-        val d = distance(loc, location)
+        val d = distanceSimple(loc, location)
         if (d > distanceThresholdMeters) {
           weight * temp
         } else
@@ -45,7 +46,7 @@ object Visualization {
 
   // https://en.wikipedia.org/wiki/Great-circle_distance
   def distance(a: Location, b: Location): Double = {
-    val dLat = toRadians(abs(a.lat - b.lat))
+    //    val dLat = toRadians(abs(a.lat - b.lat))
     val dLon = toRadians(abs(a.lon - b.lon))
     val aLatR = toRadians(a.lat)
     val bLatR = toRadians(b.lat)
@@ -53,8 +54,16 @@ object Visualization {
     val dividend = sqrt(pow(cos(bLatR) * sin(dLon), 2.0) +
       pow(cos(aLatR) * sin(bLatR) - sin(aLatR) * cos(bLatR) * cos(dLon), 2.0))
     val divisor = sin(aLatR) * sin(bLatR) + cos(aLatR) * cos(bLatR) * cos(dLon)
-    //    val radians = atan(dividend / divisor)
     val radians = atan2(dividend, divisor)
+    earthRadiusMeters * radians
+  }
+
+  def distanceSimple(a: Location, b: Location): Double = {
+    val dLon = toRadians(abs(a.lon - b.lon))
+    val aLatR = toRadians(a.lat)
+    val bLatR = toRadians(b.lat)
+
+    val radians = acos(sin(aLatR) * sin(bLatR) + cos(aLatR) * cos(bLatR) * cos(dLon))
     earthRadiusMeters * radians
   }
 
@@ -116,13 +125,6 @@ object Visualization {
     val imgType = BufferedImage.TYPE_INT_RGB
     val width = 360
     val height = 180
-
-    //    val pixels = Stream.range(0, width * height).par.map(i => {
-    //      val location = arrayIndexToLocation(i, width)
-    //      val temperature = predictTemperature(temperatures, location)
-    //      val color = interpolateColor(colors, temperature)
-    //      Pixel(color.red, color.green, color.blue, 255)
-    //    }).toArray
 
     val pixels = Stream.range(0, width * height).par
       .map(arrayIndexToLocation(_, width))
