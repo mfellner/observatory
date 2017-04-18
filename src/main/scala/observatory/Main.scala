@@ -1,6 +1,7 @@
 package observatory
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 object Main extends App {
 
@@ -29,6 +30,9 @@ object Main extends App {
     image.output(new File("test.png"))
   }
 
-//  extractTemperatures()
+  val start = System.nanoTime
+  //  extractTemperatures()
   visualize()
+  val seconds = TimeUnit.SECONDS.convert(System.nanoTime - start, TimeUnit.NANOSECONDS)
+  println(s"Time: $seconds seconds.")
 }
