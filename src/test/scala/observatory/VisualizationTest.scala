@@ -114,6 +114,6 @@ class VisualizationTest extends FunSuite with Checkers with Matchers {
     val height = 180
     val i = (width * height) - 1
     val location = Visualization.arrayIndexToLocation(i, width)
-    assert(location === Location(-90, 180))
+    assert(location === Location(-89, 179))
   }
 }

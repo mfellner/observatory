@@ -139,8 +139,8 @@ object Visualization {
   def arrayIndexToLocation(i: Int, rowWidth: Int): Location = {
     val rowIndex = i / rowWidth
     val colIndex = i - (rowIndex * rowWidth)
-    val lat = if (rowIndex < 90) 90 - rowIndex else (((rowIndex + 90) % 90) + 1) * -1
-    val lon = if (colIndex < 180) colIndex - 180 else ((colIndex - 180) % 180) + 1
+    val lat = if (rowIndex <= 90) 90 - rowIndex else (rowIndex - 90) * -1
+    val lon = if (colIndex <= 180) colIndex - 180 else colIndex - 180
     Location(lat, lon)
   }
 }
