@@ -39,13 +39,13 @@ object Interaction {
     val height = 256
 
     val stream = (for {
-      j <- x until x + width
       k <- y until y + height
+      j <- x until x + width
     } yield (j, k)).toStream.par
 
     val pixels = stream
       .map({
-        case (j, k) => tileLocation(zoom + 8, x, y)
+        case (j, k) => tileLocation(zoom + 8, j, k)
       })
       .map(predictTemperature(temperatures, _))
       .map(interpolateColor(colors, _))
