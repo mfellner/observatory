@@ -49,7 +49,7 @@ object Interaction {
 
     val pixels = stream
       .map({
-        case (j, k) => preciseTileLocation(zoom + 8, j + 0.5, k + 0.5)
+        case (j, k) => preciseTileLocation(zoom + 8, j, k)
       })
       .map(predictTemperature(temperatures, _))
       .map(interpolateColor(colors, _))
@@ -67,10 +67,10 @@ object Interaction {
     * @param generateImage Function that generates an image given a year, a zoom level, the x and
     *                      y coordinates of the tile and the data to build the image from
     */
-  def generateTiles[Data](
-                           yearlyData: Iterable[(Int, Data)],
-                           generateImage: (Int, Int, Int, Int, Data) => Unit
+  def generateTiles[Data](yearlyData: Iterable[(Int, Data)],
+                          generateImage: (Int, Int, Int, Int, Data) => Unit
                          ): Unit = {
+
     ???
   }
 
