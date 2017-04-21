@@ -1,6 +1,9 @@
 package observatory
 
+import java.awt.image.BufferedImage
+
 import com.sksamuel.scrimage.{Image, Pixel}
+import observatory.Visualization.{interpolateColor, predictTemperature}
 
 /**
   * 3rd milestone: interactive visualization
@@ -30,7 +33,26 @@ object Interaction {
     * @return A 256×256 image showing the contents of the tile defined by `x`, `y` and `zooms`
     */
   def tile(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)], zoom: Int, x: Int, y: Int): Image = {
-    ???
+
+    val imgType = BufferedImage.TYPE_INT_ARGB
+    val width = 256
+    val height = 256
+
+    val stream = (for {
+      j <- x until x + width
+      k <- y until y + height
+    } yield (j, k)).toStream.par
+
+    val pixels = stream
+      .map({
+        case (j, k) => tileLocation(zoom + 8, x, y)
+      })
+      .map(predictTemperature(temperatures, _))
+      .map(interpolateColor(colors, _))
+      .map(color => Pixel(color.red, color.green, color.blue, 127))
+      .toArray
+
+    Image(width, height, pixels, imgType)
   }
 
   /**
