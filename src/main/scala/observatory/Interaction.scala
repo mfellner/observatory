@@ -17,10 +17,10 @@ object Interaction {
     * @return The latitude and longitude of the top-left corner of the tile, as per http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
     */
   def tileLocation(zoom: Int, x: Int, y: Int): Location = {
-    tileLocation(zoom, x, y)
+    preciseTileLocation(zoom, x, y)
   }
 
-  def tileLocation(zoom: Int, x: Double, y: Double): Location = {
+  def preciseTileLocation(zoom: Int, x: Double, y: Double): Location = {
     val n = Math.pow(2.0, zoom)
     val lonDeg = x / n * 360.0 - 180.0
     val latRad = Math.atan(Math.sinh(Math.PI * (1.0 - 2.0 * y / n)))
@@ -49,7 +49,7 @@ object Interaction {
 
     val pixels = stream
       .map({
-        case (j, k) => tileLocation(zoom + 8, j + 0.5, k + 0.5)
+        case (j, k) => preciseTileLocation(zoom + 8, j + 0.5, k + 0.5)
       })
       .map(predictTemperature(temperatures, _))
       .map(interpolateColor(colors, _))
