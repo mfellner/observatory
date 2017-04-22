@@ -77,7 +77,20 @@ object Interaction {
   def generateTiles[Data](yearlyData: Iterable[(Int, Data)],
                           generateImage: (Int, Int, Int, Int, Data) => Unit
                          ): Unit = {
-    ???
+    val zoomLevels = 0 to 3
+
+    yearlyData.toStream.par.foreach({
+      case (year, data) => zoomLevels.toStream.par.foreach(zoom => {
+        val tiles = for {
+          y <- 0 until Math.pow(2, zoom).toInt
+          x <- 0 until Math.pow(2, zoom).toInt
+        } yield (x, y)
+
+        tiles.toStream.par.foreach({
+          case (x, y) => generateImage(year, zoom, x, y, data)
+        })
+      })
+    })
   }
 
 }
