@@ -52,6 +52,7 @@ object Main extends App {
     if (file.exists()) file.delete()
     file.getParentFile.mkdirs()
     image.output(file)
+    return
   }
 
   private def writeTiles(years: Seq[Int]): Unit = {
@@ -76,7 +77,7 @@ object Main extends App {
   //  generateOneTile(1, 1, 0, "10.png")
   //  generateOneTile(1, 0, 1, "01.png")
   //  generateOneTile(1, 1, 1, "11.png")
-  writeTiles(1975 to 2015)
+  writeTiles(1975 to 1995)
 
   val seconds = TimeUnit.SECONDS.convert(System.nanoTime - start, TimeUnit.NANOSECONDS)
   println(s"Time: $seconds seconds.")

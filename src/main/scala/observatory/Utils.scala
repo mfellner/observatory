@@ -33,7 +33,7 @@ object Utils {
         bw.flush()
         bw.close()
         outputPath.toString
-    }).toArray
+    }).toArray.toSeq
   }
 
   def readAverageTemperatures(file: URI): Iterable[(Location, Double)] = {
