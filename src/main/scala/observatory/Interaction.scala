@@ -56,7 +56,7 @@ object Interaction {
 
     val pixels = stream
       .map({
-        case (j, k) => preciseTileLocation(zoom + 8, j + 0.5, k + 0.5)
+        case (j, k) => tileLocation(zoom + 8, j, k)
       })
       .map(predictTemperature(temperatures, _))
       .map(interpolateColor(colors, _))
