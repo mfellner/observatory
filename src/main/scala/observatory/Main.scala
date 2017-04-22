@@ -60,8 +60,8 @@ object Main extends App {
     if (file.exists()) file.delete()
     file.getParentFile.mkdirs()
     image.output(file)
-    totalTiles += 1
-    print(s"Wrote $processedTiles of $totalTiles tiles.")
+    processedTiles += 1
+    println(s"Wrote $processedTiles of $totalTiles tiles.")
     return
   }
 
