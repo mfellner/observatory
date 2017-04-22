@@ -84,3 +84,4 @@ project/plugins/project/
 # End of https://www.gitignore.io/api/osx,intellij,sbt
 
 scala-capstone-data.zip
+!target/temperatures
