@@ -45,7 +45,7 @@ object Interaction {
     val imgType = BufferedImage.TYPE_INT_ARGB
     val width = 256
     val height = 256
-    val alpha = 255 //127
+    val alpha = 127
     val yStart = y * height
     val xStart = x * width
 
