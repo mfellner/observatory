@@ -32,19 +32,31 @@ object Main extends App {
     image.output(new File("test.png"))
   }
 
-  private def generateOneTile() = {
-    val temperatures = readTemperatures("/2000-local.csv")
-    val zoom = 0
-    val x = 0
-    val y = 0
+  private def generateOneTile(zoom: Int = 0,
+                              x: Int = 0,
+                              y: Int = 0,
+                              fileName: String = "test.png") = {
+    //    val temperatures = readTemperatures("/2000-local.csv")
+    val temperatures = Array(
+      (Location(45, -90), 0.0),
+      (Location(45, 90), 32.0),
+      (Location(-45, 90), 32.0),
+      (Location(-45, -90), 0.0),
+      (Location(83.62348, -34.145508), 16.0),
+      (Location(83.7, -34.145508), -18.0)
+    )
     val image = Interaction.tile(temperatures, colors, zoom, x, y)
-    image.output(new File("test.png"))
+    image.output(new File(fileName))
   }
 
   val start = System.nanoTime
   //  extractTemperatures()
   //  visualize()
-  generateOneTile()
+  generateOneTile(fileName = "total.png")
+  generateOneTile(1, 0, 0, "00.png")
+  generateOneTile(1, 1, 0, "10.png")
+  generateOneTile(1, 0, 1, "01.png")
+  generateOneTile(1, 1, 1, "11.png")
   val seconds = TimeUnit.SECONDS.convert(System.nanoTime - start, TimeUnit.NANOSECONDS)
   println(s"Time: $seconds seconds.")
 }
