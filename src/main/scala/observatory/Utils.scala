@@ -1,6 +1,6 @@
 package observatory
 
-import java.io.{BufferedWriter, FileWriter}
+import java.io.{BufferedWriter, File, FileWriter}
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
@@ -19,10 +19,11 @@ object Utils {
     }
   }
 
-  def extractAverageTemperatures(target: String, years: Seq[Int]): Seq[String] = {
+  def extractAverageTemperatures(baseDir: String, years: Seq[Int]): Seq[String] = {
     getAverageTemperaturesByYear(years).par.map({
       case (year, averageTemperatures) =>
-        val outputPath = Paths.get(target, s"$year-local.csv")
+        Files.createDirectories(Paths.get(baseDir))
+        val outputPath = Paths.get(baseDir, s"$year-average.csv")
         Files.deleteIfExists(outputPath)
         Files.createFile(outputPath)
         val bw = new BufferedWriter(new FileWriter(outputPath.toFile))
@@ -44,5 +45,14 @@ object Utils {
           (Location(lat.toDouble, lon.toDouble), temp.toDouble)
       })
       .toStream
+  }
+
+  def readAverageTemperatures(baseDir: String,
+                              years: Seq[Int]): Stream[(Int, Iterable[(Location, Double)])] = {
+    years.toStream.map(year => {
+      val path = Paths.get(baseDir, s"$year-average.csv")
+      val averageTemperatures = readAverageTemperatures(path.toUri)
+      (year, averageTemperatures)
+    })
   }
 }

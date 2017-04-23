@@ -7,13 +7,13 @@ import org.apache.log4j.{Level, Logger}
 
 object Main extends App {
 
-  case class Options(yearStart: Option[Int], yearEnd: Option[Int], test: Boolean) {
-    override def toString: String = s"{ start=$yearStart end=$yearEnd test=$test }"
-  }
-
-  private def extractTemperatures() = {
-    val outputPaths = Utils.extractAverageTemperatures("", Seq(2000))
-    System.out.println(s"""Wrote files: ${outputPaths.mkString("\n")}""")
+  case class Options(yearStart: Option[Int],
+                     yearEnd: Option[Int],
+                     temperatures: Option[String],
+                     makeTemperatures: Boolean,
+                     test: Boolean) {
+    override def toString: String = s"{ start=$yearStart end=$yearEnd " +
+      s"temperatures=$temperatures makeTemperatures=$makeTemperatures test=$test }"
   }
 
   private def readTemperatures(path: String) = {
@@ -21,7 +21,7 @@ object Main extends App {
     Utils.readAverageTemperatures(file)
   }
 
-  val colors = Array(
+  private val colors = Array(
     (60.0, Color(255, 255, 255)),
     (32.0, Color(255, 0, 0)),
     (12.0, Color(255, 255, 0)),
@@ -47,8 +47,8 @@ object Main extends App {
     image.output(new File(fileName))
   }
 
-  var totalTiles = 0
-  var processedTiles = 0
+  private var totalTiles = 0
+  private var processedTiles = 0
 
   private def writeTileImage(year: Int,
                              zoom: Int,
@@ -63,12 +63,6 @@ object Main extends App {
     processedTiles += 1
     println(s"Wrote $processedTiles of $totalTiles tiles.")
     return
-  }
-
-  private def writeTiles(years: Seq[Int]): Unit = {
-    totalTiles = getComplexity(Seq(0, 1, 2, 3), years.size)
-    val yearlyData = Utils.getAverageTemperaturesByYear(years)
-    Interaction.generateTiles(yearlyData, writeTileImage)
   }
 
   private def createTestImages() = {
@@ -86,12 +80,30 @@ object Main extends App {
     Interaction.generateTiles(testYearlyData, writeTileImage)
   }
 
-  private def run(options: Options): Unit = {
+  def run(options: Options): Unit = {
     val start = System.nanoTime
 
-    if (options.yearStart.nonEmpty && options.yearEnd.nonEmpty)
-      writeTiles(options.yearStart.get to options.yearEnd.get)
-    else if (options.test) {
+    if (options.yearStart.nonEmpty && options.yearEnd.nonEmpty) {
+      val years = options.yearStart.get to options.yearEnd.get
+      totalTiles = getComplexity(Seq(0, 1, 2, 3), years.size)
+
+      if (options.makeTemperatures) {
+        println(s"Extracting average temperatures.")
+        val outputPaths = Utils.extractAverageTemperatures("", years)
+        println(s"""Wrote files: ${outputPaths.mkString("\n")}""")
+      } else if (options.temperatures.nonEmpty) {
+        val baseDir = options.temperatures.get
+        println(s"Using average temperatures from $baseDir.")
+        val yearlyData = Utils.readAverageTemperatures(baseDir, years)
+        println(s"Generating $totalTiles tiles.")
+        Interaction.generateTiles(yearlyData, writeTileImage)
+      } else {
+        println(s"Calculating average temperatures.")
+        val yearlyData = Utils.getAverageTemperaturesByYear(years)
+        println(s"Generating $totalTiles tiles.")
+        Interaction.generateTiles(yearlyData, writeTileImage)
+      }
+    } else if (options.test) {
       println("Create test images.")
       createTestImages()
     } else
@@ -104,11 +116,13 @@ object Main extends App {
   private def parseArgs(args: Seq[String]): Options = {
     val startYear = args.find(s => s.matches("^--start=\\S+$")).map(_.substring(8).toInt)
     val endYear = args.find(s => s.matches("^--end=\\S+$")).map(_.substring(6).toInt)
+    val temperatures = args.find(s => s.matches("^--temperatures=\\S+$")).map(_.substring(15))
+    val makeTemperatures = args.exists(s => s.matches("^--make-temperatures"))
     val test = args.exists(s => s.matches("^--test$"))
-    Options(startYear, endYear, test)
+    Options(startYear, endYear, temperatures, makeTemperatures, test)
   }
 
-  def getComplexity(zoomLevels: Seq[Int], numberOfYears: Int): Int = {
+  private def getComplexity(zoomLevels: Seq[Int], numberOfYears: Int): Int = {
     val tilesPerYear = zoomLevels.map(z => Math.pow(2, 2 * z).toInt).sum
     numberOfYears * tilesPerYear
   }
