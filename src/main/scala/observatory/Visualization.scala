@@ -23,7 +23,7 @@ object Visualization {
 
     val weights = temperatures.toStream.par.map {
       case (loc, _) =>
-        val d = distance(loc, location)
+        val d = distanceSimple(loc, location)
         if (d > distanceThresholdMeters)
           1.0 / pow(d, p)
         else
