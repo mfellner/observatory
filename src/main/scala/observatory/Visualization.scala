@@ -11,7 +11,7 @@ import com.sksamuel.scrimage.{Image, Pixel}
 object Visualization {
   val earthRadiusMeters = 6371000.0
   val distanceThresholdMeters = 1000.0
-  val p = 2.0
+  val p = 2.5
   var temperatureMap: Map[Location, Double] = Map.empty
 
   /**
@@ -23,7 +23,7 @@ object Visualization {
 
     val weights = temperatures.toStream.par.map {
       case (loc, _) =>
-        val d = distance(loc, location)
+        val d = distanceSimple(loc, location)
         if (d > distanceThresholdMeters)
           1.0 / pow(d, p)
         else

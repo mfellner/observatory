@@ -17,7 +17,7 @@ object Interaction {
     * @return The latitude and longitude of the top-left corner of the tile, as per http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
     */
   def tileLocation(zoom: Int, x: Int, y: Int): Location = {
-    preciseTileLocation(zoom, x, y)
+    preciseTileLocation(zoom, x.toDouble, y.toDouble)
   }
 
   def preciseTileLocation(zoom: Int, x: Double, y: Double): Location = {
@@ -36,24 +36,31 @@ object Interaction {
     * @param y            Y coordinate
     * @return A 256×256 image showing the contents of the tile defined by `x`, `y` and `zooms`
     */
-  def tile(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)], zoom: Int, x: Int, y: Int): Image = {
+  def tile(temperatures: Iterable[(Location, Double)],
+           colors: Iterable[(Double, Color)],
+           zoom: Int,
+           x: Int,
+           y: Int): Image = {
 
     val imgType = BufferedImage.TYPE_INT_ARGB
     val width = 256
     val height = 256
+    val alpha = 127
+    val yStart = y * height
+    val xStart = x * width
 
     val stream = (for {
-      k <- y until y + height
-      j <- x until x + width
+      k <- yStart until yStart + height
+      j <- xStart until xStart + width
     } yield (j, k)).toStream.par
 
     val pixels = stream
       .map({
-        case (j, k) => preciseTileLocation(zoom + 8, j, k)
+        case (j, k) => tileLocation(zoom + 8, j, k)
       })
       .map(predictTemperature(temperatures, _))
       .map(interpolateColor(colors, _))
-      .map(color => Pixel(color.red, color.green, color.blue, 127))
+      .map(color => Pixel(color.red, color.green, color.blue, alpha))
       .toArray
 
     Image(width, height, pixels, imgType)
@@ -70,8 +77,20 @@ object Interaction {
   def generateTiles[Data](yearlyData: Iterable[(Int, Data)],
                           generateImage: (Int, Int, Int, Int, Data) => Unit
                          ): Unit = {
+    val zoomLevels = 0 to 3
 
-    ???
+    yearlyData.toStream.par.foreach({
+      case (year, data) => zoomLevels.toStream.par.foreach(zoom => {
+        val tiles = for {
+          y <- 0 until Math.pow(2, zoom).toInt
+          x <- 0 until Math.pow(2, zoom).toInt
+        } yield (x, y)
+
+        tiles.toStream.par.foreach({
+          case (x, y) => generateImage(year, zoom, x, y, data)
+        })
+      })
+    })
   }
 
 }
