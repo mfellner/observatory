@@ -21,7 +21,7 @@ object Visualization {
     */
   def predictTemperature(temperatures: Iterable[(Location, Double)], location: Location): Double = {
 
-    val weights = temperatures.toStream.par.map {
+    val weights = temperatures.par.map {
       case (loc, _) =>
         val d = distanceSimple(loc, location)
         if (d > distanceThresholdMeters)
@@ -32,7 +32,7 @@ object Visualization {
 
     val sumOfWeights = weights.sum
 
-    val sumOfWeightedTemps = temperatures.toStream.par.zip(weights).map {
+    val sumOfWeightedTemps = temperatures.par.zip(weights).map {
       case ((loc, temp), weight) =>
         val d = distanceSimple(loc, location)
         if (d > distanceThresholdMeters) {

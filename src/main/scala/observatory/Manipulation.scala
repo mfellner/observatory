@@ -2,7 +2,7 @@ package observatory
 
 import java.lang.Math.pow
 
-import observatory.Visualization.{distanceSimple}
+import observatory.Visualization.distanceSimple
 
 import scala.collection.{GenIterable, GenMap}
 
@@ -18,7 +18,7 @@ object Manipulation {
 
     private lazy val weightMap: GenMap[Location, GenIterable[Double]] = {
 
-      def getWeights(location: Location) = temperatures.par.map {
+      def getWeights(location: Location) = temperatures.map {
         case (loc, _) =>
           val d = distanceSimple(loc, location)
           if (d > distanceThresholdMeters)
@@ -39,7 +39,7 @@ object Manipulation {
       val location = Location(lat, lon)
       val weights = weightMap(location)
 
-      val sumOfWeightedTemps = temperatures.par.zip(weights).map {
+      val sumOfWeightedTemps = temperatures.zip(weights).map {
         case ((loc, temp), weight) =>
           val d = distanceSimple(loc, location)
           if (d > distanceThresholdMeters) {
