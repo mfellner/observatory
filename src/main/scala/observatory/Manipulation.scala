@@ -62,18 +62,15 @@ object Manipulation {
     grid.getAverageTemperature
   }
 
-  //    (lat: Int, lon: Int) => Visualization.predictTemperature(temperatures, Location(lat, lon))
-
   /**
     * @param temperaturess Sequence of known temperatures over the years (each element of the collection
     *                      is a collection of pairs of location and temperature)
     * @return A function that, given a latitude and a longitude, returns the average temperature at this location
     */
   def average(temperaturess: Iterable[Iterable[(Location, Double)]]): (Int, Int) => Double = {
-    ???
-    //    val n = temperaturess.size
-    //    (lat: Int, lon: Int) =>
-    //      temperaturess.toStream.par.map(makeGrid).map(gridFn => gridFn(lat, lon)).sum / n.toDouble
+    val n = temperaturess.size
+    (lat: Int, lon: Int) =>
+      temperaturess.par.map(makeGrid).map(gridFn => gridFn(lat, lon)).sum / n.toDouble
   }
 
   /**
