@@ -70,7 +70,7 @@ object Manipulation {
   def average(temperaturess: Iterable[Iterable[(Location, Double)]]): (Int, Int) => Double = {
     val n = temperaturess.size
     (lat: Int, lon: Int) =>
-      temperaturess.par.map(makeGrid).map(gridFn => gridFn(lat, lon)).sum / n.toDouble
+      temperaturess.map(makeGrid).map(gridFn => gridFn(lat, lon)).sum / n.toDouble
   }
 
   /**
